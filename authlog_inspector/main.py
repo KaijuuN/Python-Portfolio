@@ -1,4 +1,5 @@
 from colorama import Fore, Style
+import argparse
 
 status_color = {
     "Success": Fore.GREEN,
@@ -206,31 +207,62 @@ def parse_log_lines_into_dict(log_lines):
     return log_dict
 
 
+CLI_parser = argparse.ArgumentParser(description="CLI argparse for authlog Inspector")
+CLI_parser.add_argument(
+    "--file", type=str, default=None, required=True, help="Path to the .log file"
+)
+CLI_parser.add_argument(
+    "--limit", type=int, help="Limits the output to given number of lines"
+)
+CLI_parser.add_argument(
+    "--export", type=str, choices=["csv", "json"], help="Export format"
+)
+CLI_parser.add_argument(
+    "--reverse", action="store_true", help="Limits the output to given number of lines"
+)
+CLI_parser.add_argument(
+    "--color",
+    type=int,
+    choices=[0, 1],
+    default=1,
+    help="Enable (1) or disable (0) colored output",
+)
+
+
 def main():
     print("Welcome to the AuthLog Inspector!")
-    file_path_to_inspect = input(
-        "Please enter the path to the .log file you want to inspect: "
-    )
+    args = CLI_parser.parse_args()
     try:
-        if not is_log_file(file_path_to_inspect):
+        if not is_log_file(args.file):
             raise ValueError("File is not a .log file")
-        if not is_valid_path(file_path_to_inspect):
+        if not is_valid_path(args.file):
             raise ValueError("File path is not valid")
 
         # Read the log file
-        print(f"Reading log file: {file_path_to_inspect}")
-        log_lines = read_log_file(file_path_to_inspect)
-        print(f"Successfully read {len(log_lines)} lines from {file_path_to_inspect}.")
+        print(f"Reading log file: {args.file}")
+        log_lines = read_log_file(args.file)
+        print(
+            f"Successfully read {len(log_lines)} lines from {args.file} with limit={args.limit}."
+        )
         parsed_log = parse_log_lines_into_dict(log_lines)
         print("Log file parsed successfully.")
-        print("\nShowing first 10 parsed log entries:\n")
+        print(f"\nShowing first {args.limit} parsed log entries:\n")
         print(
             f"{'Nr':<5} {'Timestamp':<20} {'Service':<20} {'Eventtype':<20} "
             f"{'User':<30} {'IP':<18} {'Status':<13} {'Validity':<10}"
         )
         print("-" * 150)
 
-        for i in range(min(10, len(parsed_log["Timestamp"]))):
+        limit = args.limit if args.limit is not None else len(parsed_log["Timestamp"])
+
+        if not args.reverse:
+            indices = range(min(limit, len(parsed_log["Timestamp"])))
+        else:
+            start = len(parsed_log) - 1
+            stop = len(parsed_log) - limit - 1
+            indices = range(start, stop, -1)
+
+        for i in indices:
             timestamp = " ".join(parsed_log["Timestamp"][i])
             service = parsed_log["Service"][i]
             event = parsed_log["Eventtype"][i]
@@ -241,11 +273,11 @@ def main():
 
             print(
                 f"{i+1:<5} {timestamp:<20} {service:<20} {event:<20} "
-                f"{user:<30} {ip:<18} {status_color[status]}{status:<13}{Style.RESET_ALL} {validity:<10}"
+                f"{user:<30} {ip:<18} {status_color[status] if args.color == 1 else ''}{status:<13}{Style.RESET_ALL if args.color == 1 else ''} {validity:<10}"
             )
 
     except Exception as e:
-        print(f"Error reading {file_path_to_inspect}: {e}")
+        print(f"Error reading {args.file}: {e}")
 
 
 if __name__ == "__main__":

@@ -68,6 +68,17 @@ Installation:
 ```bash
 pip install colorama
 ```
+---
+
+
+## 🚀 Geplante Erweiterungen
+
+- [ ] CLI-Flags mit `argparse` (Dateipfad, Exportoptionen)
+- [ ] CSV- und JSON-Export der Analyseergebnisse
+- [ ] Echtzeit-Modus für Live-Log-Überwachung (`tail -f`)
+- [ ] Visualisierung mit Matplotlib (Diagramme zu Events)
+- [ ] Flask-Frontend für Web-Nutzeroberfläche (Upload + Anzeige)
+
 
 ---
 
